@@ -5,13 +5,11 @@ import torch.nn.functional as F
 class GAB(nn.Module):
     def __init__(self, channels):
         super(GAB, self).__init__()
-        # self.conv1 = nn.Conv2d(channels*16, channels*8, kernel_size=1) # 16
         self.conv2 = nn.Conv2d(channels, channels, kernel_size=1)
         self.conv3 = nn.Conv2d(channels, channels, kernel_size=1) #cghannels to be changed a bit
         self.global_avg_pool = nn.AdaptiveAvgPool2d(1)
 
     def forward(self, inputs):
-        # x = F.relu(self.conv1(inputs))
         gmp = self.global_avg_pool(inputs)
         gmp = F.relu(self.conv2(gmp))
         gmp = F.relu(self.conv3(gmp))
@@ -28,7 +26,7 @@ class CAB(nn.Module):
         self.classes = classes
         self.feature_per_class = feature_per_class
         self.conv1 = nn.Conv2d(in_channels=channels, out_channels=feature_per_class * classes, kernel_size=1) #8
-        # self.bn = nn.BatchNorm2d(feature_per_class * classes)
+        
         self.dropout = nn.Dropout(0.5)
         self.global_max_pool = nn.AdaptiveMaxPool2d(1)
 
@@ -39,12 +37,9 @@ class CAB(nn.Module):
         x = self.global_max_pool(F2)
         x = x.view(-1, self.classes, self.feature_per_class)
         S = torch.mean(x, dim=-1)
-        # S = S.view(-1, self.classes)
         F_avg = torch.mean(F1.view(-1, self.classes, self.feature_per_class, inputs.shape[-2], inputs.shape[-1],), dim=-3)
-        # print(S.shape,F_avg.shape)
         attention = S.unsqueeze(-1) * F_avg #.unsqueeze
         C_ATTN = torch.mean(attention, dim=-3, keepdim=True)
-        # print(C_ATTN.shape,inputs.shape)
         C_OUT = inputs * C_ATTN
         return C_OUT
 
