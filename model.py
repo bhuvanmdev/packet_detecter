@@ -38,7 +38,7 @@ class CAB(nn.Module):
         x = x.view(-1, self.classes, self.feature_per_class)
         S = torch.mean(x, dim=-1)
         F_avg = torch.mean(F1.view(-1, self.classes, self.feature_per_class, inputs.shape[-2], inputs.shape[-1],), dim=-3)
-        attention = S.unsqueeze(-1) * F_avg #.unsqueeze
+        attention = S.view(S[0],-1,1,1) * F_avg #.unsqueeze
         C_ATTN = torch.mean(attention, dim=-3, keepdim=True)
         C_OUT = inputs * C_ATTN
         return C_OUT
