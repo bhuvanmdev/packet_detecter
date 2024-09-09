@@ -30,10 +30,10 @@ class CAB(nn.Module):
         self.dropout = nn.Dropout(0.5)
         self.global_max_pool = nn.AdaptiveMaxPool2d(1)
 
-    def forward(self, inputs):
+    def forward(self, inputs,inference=False):
         F1 = self.conv1(inputs)
         F1 = F.relu(F1)
-        F2 = self.dropout(F1)
+        F2 = self.dropout(F1) if not inference else F1
         x = self.global_max_pool(F2)
         x = x.view(-1, self.classes, self.feature_per_class)
         S = torch.mean(x, dim=-1)
@@ -53,9 +53,9 @@ class Attention(nn.Module):
         self.fc1 = nn.Linear(channels, 8)
         self.fc2 = nn.Linear(8, num_classes)
 
-    def forward(self, inputs):
+    def forward(self, inputs,inference):
         x = self.GAB(inputs)
-        x = self.CAB(x)
+        x = self.CAB(x,inference)
         x = self.global_avg_pool(inputs)
         x = x.view(x.size(0), -1)
         x = F.relu(self.fc1(x))
@@ -76,7 +76,7 @@ class HexModel(nn.Module):
         self.maxpool2 = nn.MaxPool2d(kernel_size=2)
         self.attention = Attention(num_classes=num_classes, feature_per_class=feature_per_class,channels=16)
 
-    def forward(self, inputs):
+    def forward(self, inputs,inference):
         x = self.pad1(inputs)
         x = F.relu(self.conv1(x))
         x = self.maxpool1(x)
@@ -85,5 +85,5 @@ class HexModel(nn.Module):
         x = F.relu(self.conv2(x))
         x = self.bn2(x)
         x = self.maxpool2(x)
-        x = self.attention(x)
+        x = self.attention(x,inference)
         return x
